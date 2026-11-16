@@ -29,17 +29,40 @@ public class SpeedFormatTests
     public void Full(double bytesPerSecond, string expected) =>
         Assert.Equal(expected, SpeedFormat.Full(bytesPerSecond));
 
+    [Theory]
+    [InlineData(0, "0")]
+    [InlineData(6, "0")]          // 48 bps
+    [InlineData(7, "0.1K")]       // 56 bps
+    [InlineData(125_000, "1.0M")] // 1 Mbps
+    [InlineData(4_210_000, "34M")]
+    [InlineData(125_000_000, "1.0G")]
+    public void CompactInBits(double bytesPerSecond, string expected) =>
+        Assert.Equal(expected, SpeedFormat.Compact(bytesPerSecond, bits: true));
+
+    [Theory]
+    [InlineData(0, "0 bps")]
+    [InlineData(100, "800 bps")]
+    [InlineData(125, "1.00 kbps")]
+    [InlineData(4_210_000, "33.7 Mbps")]
+    [InlineData(125_000_000, "1.00 Gbps")]
+    public void FullInBits(double bytesPerSecond, string expected) =>
+        Assert.Equal(expected, SpeedFormat.Full(bytesPerSecond, bits: true));
+
     public static IEnumerable<object[]> Sweep()
     {
-        for (double v = 1; v < 1e13; v *= 1.07) yield return [v];
+        for (double v = 1; v < 1e13; v *= 1.07)
+        {
+            yield return [v, false];
+            yield return [v, true];
+        }
     }
 
     [Theory]
     [MemberData(nameof(Sweep))]
-    public void CompactFitsTheIconAndIsIdleAgrees(double bytesPerSecond)
+    public void CompactFitsTheIconAndIsIdleAgrees(double bytesPerSecond, bool bits)
     {
-        string text = SpeedFormat.Compact(bytesPerSecond);
+        string text = SpeedFormat.Compact(bytesPerSecond, bits);
         Assert.InRange(PixelFont.Measure(text), 1, TrayIconRenderer.Grid);
-        Assert.Equal(text == "0", SpeedFormat.IsIdle(bytesPerSecond));
+        Assert.Equal(text == "0", SpeedFormat.IsIdle(bytesPerSecond, bits));
     }
 }

@@ -9,6 +9,19 @@ bottom row (amber). Each row is at most four characters: `850K`, `4.2M`, `120M`.
 grey at `0` when nothing is moving. Hover over the icon for exact figures and the network name.
 Double-click it to open Resource Monitor.
 
+Right-click the icon for these options:
+
+- **Units:** MB/s or Mbps.
+- **Download colour…** and **Upload colour…**
+- **Start at login**
+
+Your choices are saved in `%APPDATA%\NetworkMonitor\settings.json`. If the file is damaged, the
+app starts with the defaults.
+
+The icon is redrawn when the taskbar's display scale changes, scaled up by whole pixels only, so
+it stays sharp. At 200% it's drawn at double size. At 150% it's drawn at normal size in the middle
+of the larger icon.
+
 ## Build, test, run
 
 Needs the .NET 8 SDK.
