@@ -52,8 +52,12 @@ static class Program
         }
 
         using var log = _log = new Log(logPath);
-        bool admin = new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
+        var identity = WindowsIdentity.GetCurrent();
+        bool admin = new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator);
+        bool perfLogUsers = identity.Groups?.Any(g => g.Value == "S-1-5-32-559") == true;
         log.Line($"ETW spike, {DateTime.Now:yyyy-MM-dd HH:mm:ss}: {seconds} s, admin={admin}, loopback load={load}");
+        log.Line($"Token: {identity.Name} ({identity.User}), Performance Log Users={perfLogUsers}, " +
+                 $"elevation={(admin ? "full" : "limited")}");
 
         try
         {

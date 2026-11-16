@@ -12,14 +12,13 @@ spikes\EtwSpike\bin\Release\net8.0-windows\EtwSpike.exe --seconds 30 [--loopback
 
 ## Results
 
-**1. Without admin rights:** `StartTrace` fails with error 5 (access denied) for a normal account.
-Two ways around that:
-
-- Add the account to *Performance Log Users*. That needs one admin step and a new sign-in. With
-  it, the app would be one process without admin rights, and no service.
-- Run a service with admin rights, as first planned.
-
-Not tested yet: does Performance Log Users really work for this provider?
+**1. Without admin rights: not possible.** `StartTrace` fails with error 5 (access denied) for a
+normal account. *Performance Log Users* doesn't help either. A fresh sign-in through
+`runas` had the group in its token (`S-1-5-32-559`, checked by the program), and it still got
+error 5. The ETW security descriptors are the Windows defaults
+(`HKLM\SYSTEM\CurrentControlSet\Control\WMI\Security` has no entries). So on this build, that
+group can't start a real-time session for this provider. **Step 2 needs a service with admin rights**,
+with the tray app connecting to it over a named pipe.
 
 **2. CPU** (the test program's own CPU, with a lock and a dictionary per event; it isn't optimised):
 
