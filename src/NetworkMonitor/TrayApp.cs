@@ -40,6 +40,7 @@ internal sealed class TrayApp : ApplicationContext
         };
 
         var menu = new ContextMenuStrip();
+        menu.Items.Add("App usage…", null, (_, _) => ShowUsage());
         menu.Items.Add("Open Resource Monitor", null, (_, _) => OpenResourceMonitor());
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(new ToolStripMenuItem("Units", null, _bytes, _bits));
@@ -177,6 +178,15 @@ internal sealed class TrayApp : ApplicationContext
         _startAtLogin.Checked = StartupRegistration.IsEnabled();
     }
 
+    UsageForm? _usage;
+
+    void ShowUsage()
+    {
+        if (_usage is null || _usage.IsDisposed) _usage = new UsageForm();
+        _usage.Show();
+        _usage.Activate();
+    }
+
     static void OpenResourceMonitor()
     {
         try
@@ -201,6 +211,7 @@ internal sealed class TrayApp : ApplicationContext
         {
             SystemEvents.UserPreferenceChanged -= OnUserPreferenceChanged;
             _timer.Dispose();
+            _usage?.Dispose();
             _icon.Visible = false;
             _icon.Icon?.Dispose();
             _icon.ContextMenuStrip?.Dispose();

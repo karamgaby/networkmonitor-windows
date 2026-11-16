@@ -1,17 +1,17 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 
-namespace EtwSpike;
+namespace NetworkMonitor;
 
 /// <summary>
 /// A real-time ETW session on Microsoft-Windows-Kernel-Network, with raw Windows calls
 /// instead of TraceEvent. Structures are written by offset, for x64 only. The offsets
-/// come from evntrace.h, evntcons.h and tdh.h.
+/// come from evntrace.h, evntcons.h and tdh.h. Starting a session needs admin rights
+/// (see docs/etw-spike.md), so only the service and the test program use this.
 /// </summary>
 internal static class Etw
 {
     internal static readonly Guid KernelNetwork = new("7DD42A49-5329-4832-8DFD-43D979153A88");
-    internal const string SessionName = "NetworkMonitor-EtwSpike";
     const ulong KeywordIpv4 = 0x10, KeywordIpv6 = 0x20;
 
     // EVENT_TRACE_PROPERTIES: 120 bytes on x64, then the session name.
@@ -23,28 +23,29 @@ internal static class Etw
     static EventRecordCallback? _callback; // ETW calls it from native code, so it must not be collected
     static IntPtr _logfile, _loggerName;
 
-    internal static void Start()
+    internal static void Start(string session)
     {
-        int err = StartWith(out _);
+        if (!Environment.Is64BitProcess) throw new PlatformNotSupportedException("The ETW structures here are laid out for x64.");
+        int err = StartWith(session);
         if (err == 183) // ERROR_ALREADY_EXISTS: left over from a run that crashed; sessions outlive their process
         {
-            Stop();
-            err = StartWith(out _);
+            Stop(session);
+            err = StartWith(session);
         }
         if (err != 0) throw new Win32Exception(err);
     }
 
-    static int StartWith(out ulong handle)
+    static int StartWith(string session)
     {
         IntPtr p = NewProperties();
         try
         {
-            int err = StartTraceW(out handle, SessionName, p);
+            int err = StartTraceW(out ulong handle, session, p);
             if (err != 0) return err;
             var provider = KernelNetwork;
             err = EnableTraceEx2(handle, ref provider, 1 /* ENABLE_PROVIDER */, 4 /* information */,
                 KeywordIpv4 | KeywordIpv6, 0, 0, IntPtr.Zero);
-            if (err != 0) Stop();
+            if (err != 0) Stop(session);
             return err;
         }
         finally
@@ -68,12 +69,12 @@ internal static class Etw
     }
 
     /// <summary>Events and buffers the session dropped because the consumer fell behind.</summary>
-    internal static (uint EventsLost, uint RealTimeBuffersLost) Query()
+    internal static (uint EventsLost, uint RealTimeBuffersLost) Query(string session)
     {
         IntPtr p = NewProperties();
         try
         {
-            int err = ControlTraceW(0, SessionName, p, 0 /* QUERY */);
+            int err = ControlTraceW(0, session, p, 0 /* QUERY */);
             if (err != 0) throw new Win32Exception(err);
             return ((uint)Marshal.ReadInt32(p, 88), (uint)Marshal.ReadInt32(p, 100));
         }
@@ -83,12 +84,12 @@ internal static class Etw
         }
     }
 
-    internal static void Stop()
+    internal static void Stop(string session)
     {
         IntPtr p = NewProperties();
         try
         {
-            ControlTraceW(0, SessionName, p, 1 /* STOP */);
+            ControlTraceW(0, session, p, 1 /* STOP */);
         }
         finally
         {
@@ -97,10 +98,13 @@ internal static class Etw
     }
 
     /// <summary>Opens the session for reading, then calls <paramref name="onEvent"/> for every event on a thread of its own.</summary>
-    internal static (Thread Thread, ulong Handle) Consume(EventRecordCallback onEvent)
+    /// <remarks>One consumer at a time: a second call replaces the first one's callback.</remarks>
+    internal static (Thread Thread, ulong Handle) Consume(string session, EventRecordCallback onEvent)
     {
         _callback = onEvent;
-        _loggerName = Marshal.StringToHGlobalUni(SessionName);
+        if (_loggerName != IntPtr.Zero) Marshal.FreeHGlobal(_loggerName);
+        if (_logfile != IntPtr.Zero) Marshal.FreeHGlobal(_logfile);
+        _loggerName = Marshal.StringToHGlobalUni(session);
         _logfile = Marshal.AllocHGlobal(448); // EVENT_TRACE_LOGFILEW on x64
         Marshal.Copy(new byte[448], 0, _logfile, 448);
         Marshal.WriteIntPtr(_logfile, 8, _loggerName);                  // LoggerName

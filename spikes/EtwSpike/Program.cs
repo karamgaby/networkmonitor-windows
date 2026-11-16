@@ -21,7 +21,7 @@ namespace EtwSpike;
 /// </summary>
 static class Program
 {
-    enum Scope { Internet, Lan, Loopback }
+    const string Session = "NetworkMonitor-EtwSpike";
 
     sealed class Totals
     {
@@ -61,7 +61,7 @@ static class Program
 
         try
         {
-            Etw.Start();
+            Etw.Start(Session);
         }
         catch (Win32Exception e)
         {
@@ -76,7 +76,7 @@ static class Program
         ulong handle = 0;
         try
         {
-            (_, handle) = Etw.Consume(OnEvent);
+            (_, handle) = Etw.Consume(Session, OnEvent);
             if (load) loadChild = StartLoopbackLoad();
 
             var meter = new RateMeter();
@@ -121,7 +121,7 @@ static class Program
                     log.Line($"         {Name(pid),-28} pid {pid,6}  ↓ {SpeedFormat.Full(t.Received / span),-11} ↑ {SpeedFormat.Full(t.Sent / span),-11} {t.Events / span,8:n0} ev/s");
             }
 
-            var (lost, buffersLost) = Etw.Query();
+            var (lost, buffersLost) = Etw.Query(Session);
             double total = clock.Elapsed.TotalSeconds;
             log.Line("");
             log.Line($"Overall: CPU {100 * (self.TotalProcessorTime - cpuStart).TotalSeconds / total:0.00}% of one core, " +
@@ -132,7 +132,7 @@ static class Program
         {
             if (loadChild is { HasExited: false }) loadChild.Kill();
             if (handle != 0) Etw.Close(handle);
-            Etw.Stop();
+            Etw.Stop(Session);
             log.Line("Session stopped.");
         }
         return 0;
@@ -181,19 +181,7 @@ static class Program
         return new IPAddress(bytes);
     }
 
-    // shortcut: the same rules step 2 will need, unit-tested there; here they only split the totals.
-    static Scope Classify(IPAddress a)
-    {
-        if (a.IsIPv4MappedToIPv6) a = a.MapToIPv4();
-        if (IPAddress.IsLoopback(a)) return Scope.Loopback;
-        byte[] b = a.GetAddressBytes();
-        if (b.Length == 4)
-            return b[0] == 10 || (b[0] == 172 && (b[1] & 0xF0) == 16) || (b[0] == 192 && b[1] == 168)
-                || (b[0] == 169 && b[1] == 254) || (b[0] == 100 && (b[1] & 0xC0) == 64) || b[0] >= 224
-                ? Scope.Lan : Scope.Internet;
-        return a.IsIPv6LinkLocal || a.IsIPv6UniqueLocal || a.IsIPv6Multicast || a.IsIPv6SiteLocal
-            ? Scope.Lan : Scope.Internet;
-    }
+    static Scope Classify(IPAddress a) => AddressScope.Classify(a.GetAddressBytes());
 
     static List<InterfaceSample> CountedNics() => InterfaceCounters.Read().Where(r => r.Counted).ToList();
 

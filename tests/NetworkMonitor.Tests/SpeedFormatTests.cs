@@ -65,4 +65,12 @@ public class SpeedFormatTests
         Assert.InRange(PixelFont.Measure(text), 1, TrayIconRenderer.Grid);
         Assert.Equal(text == "0", SpeedFormat.IsIdle(bytesPerSecond, bits));
     }
+
+    [Theory]
+    [InlineData(0, "0 B")]
+    [InlineData(999, "999 B")]
+    [InlineData(12_345_678, "12.3 MB")]
+    [InlineData(1_240_000_000_000, "1.24 TB")]
+    [InlineData(5_000_000_000_000_000, "5000 TB")]
+    public void Amount(double bytes, string expected) => Assert.Equal(expected, SpeedFormat.Amount(bytes));
 }

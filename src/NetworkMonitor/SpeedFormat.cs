@@ -33,10 +33,14 @@ internal static class SpeedFormat
     }
 
     /// <summary>Three significant digits for the tooltip: "999 B/s", "12.3 KB/s", "33.7 Mbps".</summary>
-    internal static string Full(double bytesPerSecond, bool bits = false)
+    internal static string Full(double bytesPerSecond, bool bits = false) =>
+        Scaled(InUnit(bytesPerSecond, bits), bits ? ["bps", "kbps", "Mbps", "Gbps"] : ["B/s", "KB/s", "MB/s", "GB/s"]);
+
+    /// <summary>An amount of data, three significant digits: "999 B", "12.3 MB", "1.24 TB".</summary>
+    internal static string Amount(double bytes) => Scaled(bytes, ["B", "KB", "MB", "GB", "TB"]);
+
+    static string Scaled(double v, string[] units)
     {
-        string[] units = bits ? ["bps", "kbps", "Mbps", "Gbps"] : ["B/s", "KB/s", "MB/s", "GB/s"];
-        double v = InUnit(bytesPerSecond, bits);
         if (v < 999.5) return $"{v.ToString("0", Inv)} {units[0]}";
         v /= 1000;
         int u = 1;
