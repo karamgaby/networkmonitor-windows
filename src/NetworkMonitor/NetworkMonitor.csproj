@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="NetworkMonitor.Tests" />
+    <InternalsVisibleTo Include="EtwSpike" />
   </ItemGroup>
 
 </Project>
