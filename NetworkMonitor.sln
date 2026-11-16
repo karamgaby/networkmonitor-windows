@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{87552958-1092-4A9C-9A3F-21F98808611E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkMonitor", "src\NetworkMonitor\NetworkMonitor.csproj", "{42E058D9-CE5C-48EA-808F-F881BB6D1AE0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{B2F3CEEC-3D15-4B2C-A98A-0467AB2706E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkMonitor.Tests", "tests\NetworkMonitor.Tests\NetworkMonitor.Tests.csproj", "{17FA6232-6A60-431F-AEB7-25129DF61425}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{42E058D9-CE5C-48EA-808F-F881BB6D1AE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42E058D9-CE5C-48EA-808F-F881BB6D1AE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42E058D9-CE5C-48EA-808F-F881BB6D1AE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42E058D9-CE5C-48EA-808F-F881BB6D1AE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{17FA6232-6A60-431F-AEB7-25129DF61425}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{17FA6232-6A60-431F-AEB7-25129DF61425}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{17FA6232-6A60-431F-AEB7-25129DF61425}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{17FA6232-6A60-431F-AEB7-25129DF61425}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{42E058D9-CE5C-48EA-808F-F881BB6D1AE0} = {87552958-1092-4A9C-9A3F-21F98808611E}
+		{17FA6232-6A60-431F-AEB7-25129DF61425} = {B2F3CEEC-3D15-4B2C-A98A-0467AB2706E8}
+	EndGlobalSection
+EndGlobal
